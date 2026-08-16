@@ -38,7 +38,7 @@ class CoffeeLinkPower(CoffeeLinkEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         data = self.coordinator.data or {}
-        return data.get("_monitor", {}).get("power_state") in ("ready", "heating")
+        return data.get("_monitor", {}).get("power_state") == "on"
 
 
 class CoffeeLinkOnline(CoffeeLinkEntity, BinarySensorEntity):

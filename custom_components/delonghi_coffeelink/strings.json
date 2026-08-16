@@ -26,8 +26,7 @@
       "status": {
         "name": "Status",
         "state": {
-          "ready": "Ready",
-          "heating": "Heating up",
+          "on": "On",
           "standby": "Standby",
           "offline": "Offline",
           "unknown": "Unknown"

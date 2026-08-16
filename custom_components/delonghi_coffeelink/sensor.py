@@ -47,7 +47,7 @@ SENSORS: tuple[CoffeeLinkSensorDescription, ...] = (
         translation_key="status",
         icon="mdi:coffee-maker",
         device_class=SensorDeviceClass.ENUM,
-        options=["ready", "heating", "standby", "offline", "unknown"],
+        options=["on", "standby", "offline", "unknown"],
         value_fn=lambda d: (
             "offline" if not d.get("_online")
             else d.get("_monitor", {}).get("power_state", "unknown")

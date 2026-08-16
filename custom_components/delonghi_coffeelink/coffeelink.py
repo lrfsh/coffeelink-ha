@@ -11,6 +11,7 @@ Commands are raw ECAM frames (base64) written to the `app_data_request` property
 """
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import struct
@@ -48,14 +49,16 @@ REGIONS: dict[str, dict[str, str]] = {
     },
 }
 
-# Captured ECAM "turn on / wake from standby" frame (base64):
-#   0d 07 84 0f 02 01 55 12 | 6a 82 1b e3 | 57 2e 8c 4d
-#   └─ ECAM cmd 84 0f "ON" ─┘  └ ts (4B) ┘  └ session (4B) ┘
-# The ECAM frame is length-delimited (byte 1 = len); the trailing 8 bytes are the
-# app's own timestamp + per-session token appended after the frame. We refresh the
-# timestamp on send so it isn't stale; the machine parses only the ECAM portion.
-WAKE_FRAME = "DQeEDwIBVRJqghvjVy6MTQ=="
-_WAKE_TS_OFFSET = 8
+# Cloud-session wake (DlghIoT handshake). ECAM/Eletta models relay a command ONLY
+# after a cloud session is registered: POST the "connected" property, poll the
+# machine's app_id property until it reflects our session, THEN send the command.
+# The wake frame is  0d 07 84 0f 02 01 55 12 <ts:4> <app_id:4>.
+INTEGRATION_APP_ID = 0xC0FFEE11
+WAKE_ECAM = bytes.fromhex("0d07840f02015512")  # 0d 07 84 0f 02 01 + crc 55 12 (turn on)
+CONNECTED_PROP = "app_device_connected"
+COMMAND_PROP = "app_data_request"
+APP_ID_PROP = "app_id"
+SESSION_CONFIRM_TRIES = 20  # ~40s; the machine can be slow to ack the session
 
 
 class AuthError(Exception):
@@ -66,19 +69,31 @@ class CoffeeLinkError(Exception):
     """Raised for transport / API errors."""
 
 
-def refresh_frame_timestamp(frame_b64: str) -> str:
-    """Rewrite the 4-byte app timestamp inside an app_data_request frame."""
-    b = bytearray(base64.b64decode(frame_b64))
-    if len(b) >= _WAKE_TS_OFFSET + 4:
-        b[_WAKE_TS_OFFSET:_WAKE_TS_OFFSET + 4] = struct.pack(">I", int(time.time()))
-    return base64.b64encode(bytes(b)).decode()
+def _tail(app_id: int) -> bytes:
+    return struct.pack(">I", app_id & 0xFFFFFFFF)
+
+
+def signed32(app_id: int) -> int:
+    """App id as signed int32 — matches the machine's `app_id` property value."""
+    return ((app_id & 0xFFFFFFFF) ^ 0x80000000) - 0x80000000
+
+
+def _connected_payload(app_id: int) -> str:
+    return base64.b64encode(struct.pack(">I", int(time.time())) + _tail(app_id)).decode()
+
+
+def _wake_payload(app_id: int) -> str:
+    return base64.b64encode(
+        WAKE_ECAM + struct.pack(">I", int(time.time())) + _tail(app_id)
+    ).decode()
 
 
 def decode_monitor(value: str | None) -> dict:
     """Decode d302_monitor_machine into a small status dict.
 
-    Frame: d0 12 75 0f 00 <flags> ...  byte 5 carries the power/heat state:
-      bit 0x80 = powered on, bit 0x04 = heating up.
+    Frame: d0 12 75 0f 00 <flags> ...  byte 5 bit 0x04 = standby/sleeping.
+    Observed live: standby=0x84 -> waking=0x04 -> on=0x00. So 0x04 set = standby,
+    cleared = powered on.
     """
     out: dict = {"raw": value, "power_state": "unknown"}
     if not value:
@@ -91,12 +106,7 @@ def decode_monitor(value: str | None) -> dict:
         return out
     flags = b[5]
     out["flags"] = flags
-    if flags & 0x04:
-        out["power_state"] = "heating"
-    elif flags & 0x80:
-        out["power_state"] = "ready"
-    else:
-        out["power_state"] = "standby"
+    out["power_state"] = "standby" if flags & 0x04 else "on"
     return out
 
 
@@ -265,6 +275,30 @@ class CoffeeLinkClient:
         if status not in (200, 201):
             raise CoffeeLinkError(f"datapoint write {prop} failed: HTTP {status} {str(body)[:120]}")
 
+    async def async_read_property(self, prop: str):
+        await self.async_ensure_token()
+        if not self.dsn:
+            await self.async_pick_dsn()
+        url = f"{self._ep['ayla_ads']}/apiv1/dsns/{self.dsn}/properties/{prop}.json"
+        status, body = await self._request("GET", url, headers=self._auth_headers())
+        if isinstance(body, dict):
+            return body.get("property", {}).get("value")
+        return None
+
     async def async_wake(self) -> None:
-        """Power on / wake the machine from standby."""
-        await self.async_write_datapoint("app_data_request", refresh_frame_timestamp(WAKE_FRAME))
+        """Power on / wake from standby via the DlghIoT cloud-session handshake.
+
+        1. register a cloud session (POST app_device_connected)
+        2. poll the machine's app_id property until it acks our session
+        3. send the wake command in that live window
+        """
+        app_id = INTEGRATION_APP_ID
+        target = str(signed32(app_id))
+        await self.async_write_datapoint(CONNECTED_PROP, _connected_payload(app_id))
+        for _ in range(SESSION_CONFIRM_TRIES):
+            value = await self.async_read_property(APP_ID_PROP)
+            if str(value).strip() == target:
+                break
+            await self.async_write_datapoint(CONNECTED_PROP, _connected_payload(app_id))
+            await asyncio.sleep(2)
+        await self.async_write_datapoint(COMMAND_PROP, _wake_payload(app_id))
