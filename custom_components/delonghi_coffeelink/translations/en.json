@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "De'Longhi Coffee Link",
+        "description": "Sign in with your De'Longhi Coffee Link account.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "region": "Region"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Could not reach the De'Longhi cloud.",
+      "no_device": "No coffee machine found on this account.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This machine is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "ready": "Ready",
+          "heating": "Heating up",
+          "standby": "Standby",
+          "offline": "Offline",
+          "unknown": "Unknown"
+        }
+      },
+      "total_beverages": { "name": "Total beverages" },
+      "total_espresso": { "name": "Total espressi" },
+      "total_cappuccino": { "name": "Total cappuccinos" },
+      "coffee_grounds": { "name": "Coffee grounds in tray" },
+      "beverages_until_descale": { "name": "Beverages until descale" },
+      "filters_used": { "name": "Filters used" },
+      "water_hardness": { "name": "Water hardness" }
+    },
+    "button": {
+      "wake": { "name": "Wake up" }
+    }
+  }
+}

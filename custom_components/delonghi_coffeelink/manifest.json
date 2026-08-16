@@ -1,0 +1,12 @@
+{
+  "domain": "delonghi_coffeelink",
+  "name": "De'Longhi Coffee Link",
+  "codeowners": ["@lrfsh"],
+  "config_flow": true,
+  "documentation": "https://github.com/lrfsh/homeassistant-delonghi-coffeelink",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/lrfsh/homeassistant-delonghi-coffeelink/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
