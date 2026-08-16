@@ -4,7 +4,11 @@ from __future__ import annotations
 from homeassistant.const import Platform
 
 DOMAIN = "delonghi_coffeelink"
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.BUTTON,
+]
 
 # Config entry keys (email/password/region use homeassistant.const equivalents).
 CONF_DSN = "dsn"

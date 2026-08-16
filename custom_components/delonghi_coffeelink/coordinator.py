@@ -34,7 +34,7 @@ class CoffeeLinkCoordinator(DataUpdateCoordinator[dict]):
 
     async def _async_update_data(self) -> dict:
         try:
-            online = await self.client.async_device_online()
+            device = await self.client.async_get_device()
             props = await self.client.async_get_properties()
         except AuthError as err:
             # Bad/expired credentials -> trigger the HA reauth flow.
@@ -42,6 +42,7 @@ class CoffeeLinkCoordinator(DataUpdateCoordinator[dict]):
         except CoffeeLinkError as err:
             raise UpdateFailed(str(err)) from err
 
-        props["_online"] = online
+        props["_online"] = str(device.get("connection_status", "")).lower() == "online"
+        props["_connected_at"] = device.get("connected_at")
         props["_monitor"] = decode_monitor(props.get("d302_monitor_machine"))
         return props

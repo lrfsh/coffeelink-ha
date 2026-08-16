@@ -14,6 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import CoffeeLinkCoordinator
@@ -25,6 +26,12 @@ def _int(value: object) -> int | None:
         return int(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
+
+
+def _dt(value: object):
+    if not isinstance(value, str):
+        return None
+    return dt_util.parse_datetime(value)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -94,6 +101,13 @@ SENSORS: tuple[CoffeeLinkSensorDescription, ...] = (
         icon="mdi:water",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: _int(d.get("d556_water_hardness")),
+    ),
+    CoffeeLinkSensorDescription(
+        key="connected_since",
+        translation_key="connected_since",
+        icon="mdi:clock-check-outline",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda d: _dt(d.get("_connected_at")),
     ),
 )
 

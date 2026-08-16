@@ -39,7 +39,12 @@
       "coffee_grounds": { "name": "Coffee grounds in tray" },
       "beverages_until_descale": { "name": "Beverages until descale" },
       "filters_used": { "name": "Filters used" },
-      "water_hardness": { "name": "Water hardness" }
+      "water_hardness": { "name": "Water hardness" },
+      "connected_since": { "name": "Connected since" }
+    },
+    "binary_sensor": {
+      "power": { "name": "Power" },
+      "online": { "name": "Cloud connection" }
     },
     "button": {
       "wake": { "name": "Wake up" }

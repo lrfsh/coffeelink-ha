@@ -114,6 +114,7 @@ class CoffeeLinkClient:
         self.refresh_token: str | None = None
         self._expires_at: float = 0.0
         self.dsn: str | None = None
+        self.device: dict | None = None
 
     # -- low-level -------------------------------------------------------------
     async def _request(self, method: str, url: str, *, data=None, json=None,
@@ -210,11 +211,17 @@ class CoffeeLinkClient:
         return [d.get("device", d) for d in body]
 
     async def async_pick_dsn(self) -> str:
+        await self.async_get_device()
+        return self.dsn
+
+    async def async_get_device(self) -> dict:
+        """Return (and cache) the first device dict on the account."""
         devices = await self.async_get_devices()
         if not devices:
             raise CoffeeLinkError("no device found on this account")
-        self.dsn = devices[0].get("dsn")
-        return self.dsn
+        self.device = devices[0]
+        self.dsn = self.device.get("dsn")
+        return self.device
 
     async def async_get_properties(self) -> dict[str, object]:
         await self.async_ensure_token()
