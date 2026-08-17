@@ -1,42 +1,60 @@
 # De'Longhi Coffee Link — Home Assistant integration
 
-Control and monitor a WiFi De'Longhi coffee machine (the ones paired with the
-**Coffee Link** app) directly from Home Assistant — no cloud webhooks, no Android
-app, no external cron. Verified on an **Eletta Explore 450.65.G** (`oem_model
-DL-striker-cb`, EU region).
+Monitor and control a WiFi De'Longhi coffee machine (the ones paired with the
+**Coffee Link** app) directly from Home Assistant — cloud-only, no companion app,
+no Android emulator, no external cron. Verified on an **Eletta Explore 450.65.G**.
 
 ## How it works
 
-The machine talks the binary **ECAM** protocol tunnelled through **Ayla
-Networks** IoT cloud. Auth is a two-step chain, fully headless:
+The machine speaks the binary **ECAM** protocol tunnelled through the **Ayla
+Networks** IoT cloud. Auth is a two-step, fully headless chain:
 
 1. **Gigya** `accounts.login` (email + password) → `id_token`
 2. **Ayla** `token_sign_in` (app_id + app_secret + id_token) → `access_token` (24 h)
 
-The integration then reads/writes Ayla *properties*. Commands (e.g. power-on) are
-raw ECAM frames written base64-encoded to the `app_data_request` property.
+The integration then reads/writes Ayla *properties*. The De'Longhi app's Gigya key
+and Ayla `app_id`/`app_secret` are **hardcoded in the app and identical for every
+user**, so you only ever provide your **email + password**. Token lifetime is
+handled by the coordinator (refresh token → full re-login fallback) — **no cron is
+required.**
 
-The De'Longhi app's Gigya key and Ayla `app_id`/`app_secret` are **hardcoded in
-the app and identical for every user** — they ship inside this integration, so you
-only ever provide your **email + password**. Token lifetime is handled by the
-`DataUpdateCoordinator` (refresh token → full re-login fallback); **no cron or
-CronJob is required.**
+### Power-on (the tricky bit)
 
-## Install (HACS custom repository)
+ECAM/Eletta machines ignore a "cold" command. Power-on uses the **DlghIoT
+cloud-session handshake**:
+
+1. Register a session — write `app_device_connected`
+2. Poll the machine's `app_id` property until it reflects our session (~10–15 s)
+3. Send the ECAM `84 0f` wake command → the machine relays it → standby → on
+
+## Install
+
+### Via HACS (custom repository)
 
 1. HACS → ⋮ → **Custom repositories**
 2. Add `https://github.com/lrfsh/homeassistant-delonghi-coffeelink`, category
    **Integration**
 3. Install **De'Longhi Coffee Link**, then restart Home Assistant
-4. **Settings → Devices & Services → Add Integration → De'Longhi Coffee Link**
-5. Enter your Coffee Link **email**, **password**, and **region** (EU / US / CN)
 
-## Entities (v1)
+### Manual
+
+Copy `custom_components/delonghi_coffeelink/` into your `config/custom_components/`
+directory and restart Home Assistant.
+
+### Configure
+
+**Settings → Devices & Services → Add Integration → De'Longhi Coffee Link**, then
+enter your Coffee Link **email**, **password**, and **region**.
+
+## Entities
 
 | Entity | Type | Notes |
 |--------|------|-------|
 | Wake up | button | Powers the machine on / wakes it from standby |
-| Status | sensor (enum) | `ready` / `heating` / `standby` / `offline` |
+| Status | sensor (enum) | `on` / `standby` / `offline` |
+| Power | binary_sensor | on while the machine is powered on |
+| Cloud connection | binary_sensor | Ayla connectivity |
+| Connected since | sensor (timestamp) | WiFi module online-since (uptime) |
 | Total beverages | sensor | lifetime counter |
 | Total espressi | sensor | lifetime counter |
 | Total cappuccinos | sensor | lifetime counter |
@@ -45,22 +63,39 @@ CronJob is required.**
 | Filters used | sensor | lifetime counter |
 | Water hardness | sensor | configured hardness level |
 
-Per-beverage brew buttons (espresso, cappuccino, …) are planned for v2 — they need
-one "learn" pass to capture each dispense frame.
+Per-beverage brew buttons (espresso, cappuccino, …) are planned — they need one
+"learn" pass to capture each dispense frame.
 
-## Regions
+## Compatibility
+
+| Machine | oem_model | Monitoring | Power-on | Status |
+|---------|-----------|:---------:|:--------:|--------|
+| Eletta Explore 450.65.G | `DL-striker-cb` | ✅ | ✅ | **Verified** |
+| Other Eletta Explore (`DL-striker*`) | `DL-striker*` | ✅ | ✅ | Expected, untested |
+| Other Coffee Link machines (Dinamica, PrimaDonna, Magnifica Evo WiFi, …) | Ayla + ECAM | ✅ | ⚠️ | Likely; may need per-model tuning |
+| Eletta Ultra / "My Coffee Lounge" | Daedalus (AWS + MQTT) | ❌ | ❌ | **Not supported** (different stack) |
+
+If you run a machine not listed as verified, please open an issue with your
+`oem_model` and a diagnostics download — most Coffee Link machines share this
+Ayla/ECAM stack and should work.
+
+### Regions
 
 `eu` is verified against a live account. `us` / `cn` use the standard Ayla/Gigya
-hosts and may need a region-specific Gigya key; open an issue with details if you
-run one of those.
+hosts and may need a region-specific Gigya key — open an issue if you run one.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits & prior art
 
-- `sk7n4k3d/delonghi-ha`, `actabi/delonghi_coffeelink` — Ayla/Gigya flow & property
-  names
+- `actabi/delonghi_coffeelink` — the cloud-session handshake (`app_id` confirm)
+  that makes power-on actually work
+- `sk7n4k3d/delonghi-ha` — Ayla/Gigya flow & property names
+- `miditkl/cremalink` — generic local+cloud De'Longhi bridge
 - `prototux/delonghi-re`, `Arbuzov/home_assistant_delonghi_primadonna` — ECAM frame
   format
-- `ayla-iot-unofficial` — generic Ayla client reference
 
 ## Legal
 
