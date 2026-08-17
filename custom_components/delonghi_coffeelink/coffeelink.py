@@ -60,6 +60,23 @@ COMMAND_PROP = "app_data_request"
 APP_ID_PROP = "app_id"
 SESSION_CONFIRM_TRIES = 20  # ~40s; the machine can be slow to ack the session
 
+# d302_monitor status codes (contents[5]); layout from the DlghIoT client.
+MACHINE_STATUS = {
+    0: "standby",
+    1: "waking_up",
+    2: "going_to_sleep",
+    4: "descaling",
+    5: "preparing_steam",
+    6: "recovering",
+    7: "ready",
+    8: "rinsing",
+    10: "preparing_milk",
+    11: "dispensing_hot_water",
+    12: "cleaning_milk",
+    16: "preparing_chocolate",
+    17: "preparing_milk_alt",
+}
+
 
 class AuthError(Exception):
     """Raised when authentication fails (bad credentials / region)."""
@@ -107,6 +124,14 @@ def decode_monitor(value: str | None) -> dict:
     flags = b[5]
     out["flags"] = flags
     out["power_state"] = "standby" if flags & 0x04 else "on"
+    out["switches"] = flags | (b[6] << 8)
+    if len(b) >= 10:
+        out["status_code"] = b[9]
+        out["status_name"] = MACHINE_STATUS.get(b[9], "unknown")
+    # 32-bit alarm bitfield (0 = no problem). Bit layout from the DlghIoT MonitorV2:
+    # 0=water tank empty, 1=grounds full, 2=descale needed, 3=filter, 16=water low.
+    if len(b) >= 14:
+        out["alarms"] = b[7] | (b[8] << 8) | (b[12] << 16) | (b[13] << 24)
     return out
 
 

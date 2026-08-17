@@ -26,8 +26,19 @@
       "status": {
         "name": "Status",
         "state": {
-          "on": "On",
           "standby": "Standby",
+          "waking_up": "Waking up",
+          "going_to_sleep": "Going to sleep",
+          "descaling": "Descaling",
+          "preparing_steam": "Preparing steam",
+          "recovering": "Recovering",
+          "ready": "Ready",
+          "rinsing": "Rinsing",
+          "preparing_milk": "Preparing milk",
+          "dispensing_hot_water": "Dispensing hot water",
+          "cleaning_milk": "Cleaning milk",
+          "preparing_chocolate": "Preparing chocolate",
+          "preparing_milk_alt": "Preparing milk",
           "offline": "Offline",
           "unknown": "Unknown"
         }
@@ -43,7 +54,12 @@
     },
     "binary_sensor": {
       "power": { "name": "Power" },
-      "online": { "name": "Cloud connection" }
+      "online": { "name": "Cloud connection" },
+      "problem": { "name": "Problem" },
+      "water_tank_empty": { "name": "Water tank empty" },
+      "grounds_full": { "name": "Grounds container full" },
+      "descale_needed": { "name": "Descaling needed" },
+      "filter_replace": { "name": "Water filter" }
     },
     "button": {
       "wake": { "name": "Wake up" }

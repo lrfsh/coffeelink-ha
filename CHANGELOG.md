@@ -4,6 +4,22 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-08-17
+
+### Added
+- **Maintenance alarms** decoded from the monitor alarm bitfield, each a `problem`
+  binary sensor: **Water tank empty**, **Grounds container full**, **Descaling
+  needed**, **Water filter** — plus a generic **Problem** sensor (on for any alarm).
+- Detailed machine **Status** states — `ready`, `rinsing`, `descaling`,
+  `preparing_steam`, `preparing_milk`, `dispensing_hot_water`, `cleaning_milk`,
+  `waking_up`, `going_to_sleep`, … — decoded from the monitor status code.
+
+### Changed
+- The **Status** sensor now reports the machine's real operational state instead of
+  a plain on / standby.
+
+[0.1.1]: https://github.com/lrfsh/coffeelink-ha/releases/tag/v0.1.1
+
 ## [0.1.0] - 2026-08-17
 
 Initial release.
