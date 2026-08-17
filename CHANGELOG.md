@@ -31,4 +31,4 @@ Initial release.
   `app_id`/`app_secret`), same as every community integration — required for
   interoperability, not user secrets.
 
-[0.1.0]: https://github.com/lrfsh/homeassistant-delonghi-coffeelink/releases/tag/v0.1.0
+[0.1.0]: https://github.com/lrfsh/coffeelink-ha/releases/tag/v0.1.0

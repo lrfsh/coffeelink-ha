@@ -32,7 +32,7 @@ cloud-session handshake**:
 ### Via HACS (custom repository)
 
 1. HACS → ⋮ → **Custom repositories**
-2. Add `https://github.com/lrfsh/homeassistant-delonghi-coffeelink`, category
+2. Add `https://github.com/lrfsh/coffeelink-ha`, category
    **Integration**
 3. Install **De'Longhi Coffee Link**, then restart Home Assistant
 
