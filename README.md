@@ -1,5 +1,10 @@
 # De'Longhi Coffee Link — Home Assistant integration
 
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lrfsh&repository=coffeelink-ha&category=integration)
+
+[![License](https://img.shields.io/github/license/lrfsh/coffeelink-ha?style=for-the-badge&color=success)](LICENSE)
+[![Source Code](https://img.shields.io/badge/Source-GitHub-black?style=for-the-badge&logo=github)](https://github.com/lrfsh/coffeelink-ha)
+
 Monitor and control a WiFi De'Longhi coffee machine (the ones paired with the
 **Coffee Link** app) directly from Home Assistant — cloud-only, no companion app,
 no Android emulator, no external cron. Verified on an **Eletta Explore 450.65.G**.
