@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon.png" alt="Coffee Link for Home Assistant" width="128"/>
+</p>
+
 # De'Longhi Coffee Link — Home Assistant integration
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lrfsh&repository=coffeelink-ha&category=integration)
@@ -68,8 +72,22 @@ enter your Coffee Link **email**, **password**, and **region**.
 | Filters used | sensor | lifetime counter |
 | Water hardness | sensor | configured hardness level |
 
-Per-beverage brew buttons (espresso, cappuccino, …) are planned — they need one
-"learn" pass to capture each dispense frame.
+## Current limitations
+
+This is an early release. Right now it can **power the machine on** and **monitor**
+it — it cannot yet brew drinks or change settings.
+
+**Works today**
+- ✅ Power on (wake from standby)
+- ✅ Live status + counters (status, uptime, beverage counts, descale/filter, water hardness)
+
+**Planned**
+- ⏳ Brew individual drinks — espresso, coffee, cappuccino, latte macchiato, flat white, …
+- ⏳ Power off / standby
+- ⏳ Machine settings (temperature, auto-off, water hardness)
+
+The hard part — the cloud-session handshake that makes commands actually work — is
+already solved, so adding the brew commands (ECAM `83 f0` family) is the next step.
 
 ## Compatibility
 

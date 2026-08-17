@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a5238"/>
+      <stop offset="1" stop-color="#3c2216"/>
+    </linearGradient>
+    <linearGradient id="coffee" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d0954f"/>
+      <stop offset="1" stop-color="#8a5322"/>
+    </linearGradient>
+  </defs>
+
+  <!-- app-icon background -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#bg)"/>
+
+  <!-- WiFi "steam" rising from the cup -->
+  <g fill="none" stroke="#f5e6d3" stroke-width="20" stroke-linecap="round">
+    <path d="M188 168 a96 96 0 0 1 136 0"/>
+    <path d="M212 206 a62 62 0 0 1 88 0"/>
+  </g>
+  <circle cx="256" cy="236" r="13" fill="#f5e6d3"/>
+
+  <!-- saucer -->
+  <ellipse cx="256" cy="410" rx="156" ry="28" fill="#f5e6d3"/>
+  <ellipse cx="256" cy="405" rx="156" ry="24" fill="#fbf3e8"/>
+
+  <!-- cup body -->
+  <path d="M150 286 h212 l-10 70 a96 78 0 0 1 -192 0 z" fill="#ffffff"/>
+  <!-- coffee surface -->
+  <ellipse cx="256" cy="290" rx="106" ry="20" fill="url(#coffee)"/>
+  <ellipse cx="256" cy="288" rx="106" ry="16" fill="none" stroke="#ffffff" stroke-width="10"/>
+
+  <!-- handle -->
+  <path d="M366 300 a54 54 0 0 1 2 96" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round"/>
+</svg>
