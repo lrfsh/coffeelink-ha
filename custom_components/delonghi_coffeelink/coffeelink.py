@@ -105,6 +105,51 @@ def _wake_payload(app_id: int) -> str:
     ).decode()
 
 
+def crc16_aug_ccitt(data: bytes) -> int:
+    """CRC16/AUG-CCITT (poly 0x1021, init 0x1D0F) used by ECAM frames."""
+    crc = 0x1D0F
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) if crc & 0x8000 else crc << 1
+            crc &= 0xFFFF
+    return crc
+
+
+# Brew (dispense) command family + Eletta recipe trailer.
+CMD_FAMILY_BREW = bytes([0x83, 0xF0])
+ELETTA_RECIPE_TRAILER = bytes([0x01, 0x0A])
+ACTION_START = 0x01
+ACTION_STOP = 0x02
+
+# Beverages we expose buttons for: (beverage_id, key, display, icon).
+BEVERAGES = [
+    (0x01, "espresso", "Espresso", "mdi:coffee"),
+    (0x02, "coffee", "Coffee", "mdi:coffee"),
+    (0x07, "cappuccino", "Cappuccino", "mdi:coffee"),
+    (0x0A, "flat_white", "Flat White", "mdi:coffee"),
+    (0x10, "hot_water", "Hot Water", "mdi:cup-water"),
+]
+
+# beverage_id -> profile-1 stored-recipe property (source of the recipe block).
+RECIPE_PROPS = {
+    0x01: "d059_rec_1_espresso",
+    0x02: "d060_rec_1_regular",
+    0x07: "d065_rec_1_cappuccino",
+    0x0A: "d068_rec_1_flat_white",
+    0x10: "d073_rec_1_hot_water",
+}
+
+
+def _beverage_payload(bev: int, action: int, recipe_block: bytes, app_id: int) -> str:
+    """Build an Eletta dispense frame: 0d LEN 83 f0 bev action <recipe> 01 0a crc ts app_id."""
+    body = bytes([CMD_FAMILY_BREW[0], CMD_FAMILY_BREW[1], bev, action]) + recipe_block + ELETTA_RECIPE_TRAILER
+    frame = bytes([0x0D, len(body) + 3]) + body
+    frame += crc16_aug_ccitt(frame).to_bytes(2, "big")
+    frame += struct.pack(">I", int(time.time())) + _tail(app_id)
+    return base64.b64encode(frame).decode()
+
+
 def decode_monitor(value: str | None) -> dict:
     """Decode d302_monitor_machine into a small status dict.
 
@@ -310,20 +355,38 @@ class CoffeeLinkClient:
             return body.get("property", {}).get("value")
         return None
 
-    async def async_wake(self) -> None:
-        """Power on / wake from standby via the DlghIoT cloud-session handshake.
-
-        1. register a cloud session (POST app_device_connected)
-        2. poll the machine's app_id property until it acks our session
-        3. send the wake command in that live window
-        """
-        app_id = INTEGRATION_APP_ID
+    async def _ensure_session(self, app_id: int) -> None:
+        """DlghIoT handshake: register a cloud session and wait for the machine
+        to acknowledge it in the app_id property, so commands get relayed."""
         target = str(signed32(app_id))
         await self.async_write_datapoint(CONNECTED_PROP, _connected_payload(app_id))
         for _ in range(SESSION_CONFIRM_TRIES):
-            value = await self.async_read_property(APP_ID_PROP)
-            if str(value).strip() == target:
-                break
+            if str(await self.async_read_property(APP_ID_PROP)).strip() == target:
+                return
             await self.async_write_datapoint(CONNECTED_PROP, _connected_payload(app_id))
             await asyncio.sleep(2)
+
+    async def async_wake(self) -> None:
+        """Power on / wake from standby via the cloud-session handshake."""
+        app_id = INTEGRATION_APP_ID
+        await self._ensure_session(app_id)
         await self.async_write_datapoint(COMMAND_PROP, _wake_payload(app_id))
+
+    async def async_brew(self, beverage_id: int, action: int = ACTION_START) -> None:
+        """Start (or stop) a beverage. Recipe block comes from the machine's
+        profile-1 stored recipe. EXPERIMENTAL until validated on a real brew."""
+        app_id = INTEGRATION_APP_ID
+        recipe_block = b""
+        prop = RECIPE_PROPS.get(beverage_id)
+        if prop:
+            raw = await self.async_read_property(prop)
+            if isinstance(raw, str) and raw:
+                try:
+                    rb = base64.b64decode(raw)
+                    recipe_block = rb[6:-2]  # strip d0 12 a6 f0 <prof> <bev> ... <crc16>
+                except Exception:  # noqa: BLE001
+                    recipe_block = b""
+        await self._ensure_session(app_id)
+        await self.async_write_datapoint(
+            COMMAND_PROP, _beverage_payload(beverage_id, action, recipe_block, app_id)
+        )

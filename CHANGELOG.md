@@ -4,6 +4,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-08-17
+
+### Added
+- **Beverage buttons** (EXPERIMENTAL) — Espresso, Coffee, Cappuccino, Flat White,
+  Hot Water. Each builds an ECAM `83 f0` dispense frame from the machine's stored
+  profile-1 recipe and sends it via the cloud-session handshake.
+
+> ⚠️ **Experimental:** the dispense frame is built from the stored recipe and has
+> not yet been validated against a real brew on every model. Pressing a button
+> brews a real drink — keep a cup under the spout. Please report results.
+
+[0.2.0]: https://github.com/lrfsh/coffeelink-ha/releases/tag/v0.2.0
+
 ## [0.1.1] - 2026-08-17
 
 ### Added
