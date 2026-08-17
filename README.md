@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="icon.png" alt="Coffee Link for Home Assistant" width="128"/>
+  <img src="https://raw.githubusercontent.com/lrfsh/coffeelink-ha/master/icon.png" alt="Coffee Link for Home Assistant" width="128"/>
 </p>
 
 # De'Longhi Coffee Link — Home Assistant integration
 
 [![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lrfsh&repository=coffeelink-ha&category=integration)
 
-[![License](https://img.shields.io/github/license/lrfsh/coffeelink-ha?style=for-the-badge&color=success)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)](https://github.com/lrfsh/coffeelink-ha/blob/master/LICENSE)
 [![Source Code](https://img.shields.io/badge/Source-GitHub-black?style=for-the-badge&logo=github)](https://github.com/lrfsh/coffeelink-ha)
 
 Monitor and control a WiFi De'Longhi coffee machine (the ones paired with the
